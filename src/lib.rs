@@ -4,12 +4,8 @@
 ///! High-Sensitivity Pulse Oximeter and Heart-Rate Sensor for Wearable Health
 ///! Datasheet: https://datasheets.maximintegrated.com/en/ds/MAX30102.pdf
 use embedded_hal::{
-    blocking::delay::DelayMs,
     blocking::i2c::{Write, WriteRead},
 };
-
-use bitflags::bitflags;
-use byteorder::{ByteOrder, LittleEndian};
 
 /// All possible errors in this crate
 #[derive(Debug)]
@@ -69,7 +65,7 @@ impl<I, E> Max30102<I>
 
         self.set_fifo_rollover(true)?;
 
-        self.set_led_mode(MAX30102_MODE_MULTILED)?; //Watch all three LED channels
+        self.set_led_mode(MAX30102_MODE_MULTILED)?;
 
         self.set_adc_range(MAX30102_ADCRANGE_4096)?;
 
@@ -77,8 +73,8 @@ impl<I, E> Max30102<I>
 
         self.set_pulse_width(MAX30102_PULSEWIDTH_411)?;
 
-        self.set_pulse_amplitude_red(0x7f);
-        self.set_pulse_amplitude_ir(0x7f);
+        self.set_pulse_amplitude_red(0x7f)?;
+        self.set_pulse_amplitude_ir(0x7f)?;
 
         self.enable_slot(1, SLOT_RED_LED)?;
         self.enable_slot(2, SLOT_IR_LED)?;
@@ -168,6 +164,39 @@ impl<I, E> Max30102<I>
         self.write_u8( MAX30102_FIFOREADPTR, 0).map_err(Error::I2c)?;
 
         Ok(())
+    }
+
+    /// Returns last sample from device's FIFO or None.
+    pub fn read_fifo(&mut self) -> Result<Option<(u32, u32)>, Error<E>> {
+        Ok(if self.fifo_samples_available()? > 0 {
+            let mut buf = [0u8; 6];
+
+            self
+                .read_bytes(MAX30102_FIFODATA, &mut buf)
+                .map_err(Error::I2c)?;
+
+            let led1 = (buf[0] as u32) << 16 | (buf[1] as u32) << 8 | (buf[2] as u32);
+            let led2 = (buf[3] as u32) << 16 | (buf[4] as u32) << 8 | (buf[5] as u32);
+
+            // Use only 18 bits
+            Some((led1 & 0x3FFFF, led2 & 0x3FFFF))
+        } else {
+            None
+        })
+    }
+
+    /// Returns number of samples available in FIFO.
+    pub fn fifo_samples_available(&mut self) -> Result<u8, Error<E>> {
+        // Read FIFO read and write pointer
+        let rp = self.read_u8(MAX30102_FIFOREADPTR).map_err(Error::I2c)?;
+        let wp = self.read_u8(MAX30102_FIFOWRITEPTR).map_err(Error::I2c)?;
+
+        let mut num_samples = (wp - rp) as i8;
+        if num_samples < 0 {
+            num_samples += 32;
+        }
+
+        Ok(num_samples as u8)
     }
 
     /// Reads-Modifies-Writes a register by given mask and value.

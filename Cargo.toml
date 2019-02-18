@@ -17,10 +17,6 @@ keywords = [
 license = "MIT"
 readme = "README.md"
 
-[dependencies]
-byteorder = { version = "1", default-features = false }
-bitflags = "1"
-
 [dependencies.embedded-hal]
 version = "0.2.2"
 features = ["unproven"]
