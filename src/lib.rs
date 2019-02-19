@@ -177,7 +177,7 @@ impl<I, E> Max30102<I>
         let rp = self.read_u8(MAX30102_FIFOREADPTR).map_err(Error::I2c)?;
         let wp = self.read_u8(MAX30102_FIFOWRITEPTR).map_err(Error::I2c)?;
 
-        let mut num_samples = (wp - rp) as i8;
+        let mut num_samples = (wp - rp) as isize;
         if num_samples < 0 {
             num_samples += 32;
         }
