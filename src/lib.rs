@@ -20,16 +20,8 @@ pub enum Error<E> {
     InvalidSlotNumber,
 }
 
-const NUM_SAMPLES: usize = 4;
-
 pub struct Max30102<I> {
     i2c: I,
-
-    samples_red: [u32; NUM_SAMPLES],
-    samples_ir: [u32; NUM_SAMPLES],
-
-    head: u8,
-    tail: u8,
 }
 
 impl<I, E> Max30102<I>
@@ -41,12 +33,6 @@ impl<I, E> Max30102<I>
     pub fn new(i2c: I) -> Self {
         let max = Max30102 {
             i2c,
-
-            samples_red: [0; NUM_SAMPLES],
-            samples_ir: [0; NUM_SAMPLES],
-
-            head: 0,
-            tail: 0,
         };
 
         max
