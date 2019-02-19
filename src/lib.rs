@@ -152,7 +152,7 @@ impl<I, E> Max30102<I>
         Ok(())
     }
 
-    /// Returns last sample from device's FIFO or None.
+    /// Returns last sample from on-chip FIFO or None.
     pub fn read_fifo(&mut self) -> Result<Option<(u32, u32)>, Error<E>> {
         Ok(if self.fifo_samples_available()? > 0 {
             let mut buf = [0u8; 6];
