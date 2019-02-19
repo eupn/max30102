@@ -110,7 +110,7 @@ impl<I, E> Max30102<I>
         self.rmw_mask(MAX30102_PARTICLECONFIG, MAX30102_SAMPLERATE_MASK, rate)
     }
 
-    /// Sets ADC sample rate.
+    /// Sets LED pulse width.
     pub fn set_pulse_width(&mut self, width: u8) -> Result<(), Error<E>> {
         self.rmw_mask(MAX30102_PARTICLECONFIG, MAX30102_PULSEWIDTH_MASK, width)
     }
